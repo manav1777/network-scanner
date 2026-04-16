@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Python Network Scanner</title>
+    <title>Network Scanner</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #1c92d2, #f2fcfe); /* gradient background */
+            background: linear-gradient(to right, #1c92d2, #f2fcfe);
             color: #333;
             text-align: center;
             padding: 50px;
@@ -16,25 +17,32 @@
             color: #0b3d91;
         }
 
+        .subtitle {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #444;
+        }
+
         form {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         input[type="text"] {
             padding: 10px;
-            width: 250px;
+            width: 280px;
             border-radius: 5px;
             border: 1px solid #ccc;
             font-size: 16px;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 10px 15px;
+            margin: 5px;
             border-radius: 5px;
             border: none;
             background-color: #0b3d91;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
         }
 
@@ -42,61 +50,95 @@
             background-color: #054a91;
         }
 
-        hr {
-            margin: 40px 0;
-            border: 1px solid #ccc;
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        li {
-            margin: 5px 0;
-            font-weight: bold;
-        }
-
-        .open {
-            color: green;
-        }
-
-        .error {
-            color: red;
+        .hint {
+            font-size: 13px;
+            color: #555;
+            margin-top: 10px;
         }
 
         .results-box {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             padding: 20px;
             border-radius: 10px;
             display: inline-block;
             text-align: left;
+            margin-top: 20px;
+            min-width: 300px;
+        }
+
+        .open {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .port {
+            padding: 4px 0;
         }
     </style>
 </head>
+
 <body>
     <h1>Network Scanner</h1>
 
+    <div class="subtitle">
+        Scan a target system to detect open ports and exposed services
+    </div>
+
     <form method="POST">
-        <input type="text" name="ip" placeholder="Enter IP or hostname" required>
-        <button type="submit">Scan</button>
+        <input type="text" name="ip" placeholder="Enter IP or domain (example: scanme.nmap.org)" required>
+        <br>
+
+        <button type="submit">Start Scan</button>
+        <button type="button" onclick="fillExample()">Try Example</button>
     </form>
+
+    <div class="hint">
+        Tip: Click "Try Example" if you are not sure what to enter
+    </div>
 
     <hr>
 
     {% if results %}
     <div class="results-box">
-        <h2>Scan Results for {{ request.form.ip }}{% if resolved_ip %} ({{ resolved_ip }}){% endif %}:</h2>
-        <ul>
-            {% for result in results %}
-                {% if "→ OPEN" in result %}
-                    <li class="open">{{ result }}</li>
-                {% else %}
-                    <li class="error">{{ result }}</li>
-                {% endif %}
-            {% endfor %}
-        </ul>
+
+        <h3>
+            Results
+            {% if resolved_ip %}
+                ({{ resolved_ip }})
+            {% endif %}
+        </h3>
+
+        {% for result in results %}
+
+            {% if result.error is defined %}
+                <div class="error">{{ result.error }}</div>
+
+            {% else %}
+                <div class="port">
+                    Port {{ result.port }} ({{ result.service }})
+                    {% if result.status == "OPEN" %}
+                        <span class="open">OPEN</span>
+                    {% else %}
+                        <span>{{ result.status }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        {% endfor %}
+
     </div>
     {% endif %}
+
+    <script>
+        function fillExample() {
+            document.querySelector('input[name="ip"]').value = "scanme.nmap.org";
+        }
+    </script>
+
 </body>
 </html>
