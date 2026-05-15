@@ -15,32 +15,31 @@ body {
 
 .container {
     max-width: 900px;
-    margin: 40px auto;
+    margin: 50px auto;
     background: white;
     padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
 }
 
 h1 {
-    text-align: center;
+    color: #1e3a8a;
     font-size: 34px;
-    color: #0b3d91;
 }
 
 .subtitle {
-    text-align: center;
+    color: #64748b;
     font-size: 18px;
-    color: #334155;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 input {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .button-row {
@@ -52,59 +51,54 @@ input {
 
 button {
     width: 200px;
-    padding: 14px;
+    padding: 12px;
     border: none;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 14px;
     background: #2563eb;
     color: white;
-}
-
-button:hover {
-    background: #1d4ed8;
 }
 
 .secondary-btn {
     background: #334155;
 }
 
-.secondary-btn:hover {
-    background: #1f2937;
+button:hover {
+    opacity: 0.9;
 }
 
 .hint {
-    text-align: center;
-    font-size: 14px;
-    color: #64748b;
+    font-size: 13px;
+    color: #555;
     margin-top: 10px;
 }
 
 .results-box {
     margin-top: 25px;
     padding: 20px;
-    background: #f1f5f9;
+    background: #f8fafc;
     border-radius: 10px;
     border: 1px solid #cbd5e1;
     text-align: left;
 }
 
 .results-box h3 {
-    color: #0b3d91;
+    color: #1e3a8a;
 }
 
 .port {
-    font-size: 16px;
+    font-size: 14px;
     margin: 5px 0;
 }
 
 .open {
-    color: #16a34a;
+    color: green;
     font-weight: bold;
 }
 
 .error {
-    color: #dc2626;
+    color: red;
     font-weight: bold;
 }
 
@@ -112,25 +106,18 @@ button:hover {
     display: none;
     margin-top: 25px;
     padding: 20px;
-    background: #f1f5f9;
-    border-radius: 10px;
+    background: #f8fafc;
     border: 1px solid #cbd5e1;
+    border-radius: 10px;
     text-align: left;
 }
 
 #infoBox h2 {
-    font-size: 26px;
-    color: #0b3d91;
+    color: #1e3a8a;
 }
 
 #infoBox h3 {
-    font-size: 18px;
     color: #334155;
-}
-
-#infoBox p {
-    font-size: 16px;
-    line-height: 1.6;
 }
 
 </style>
@@ -148,7 +135,7 @@ Scan a target system to detect open ports and exposed services
 
 <form method="POST">
 
-<input type="text" name="ip" placeholder="Enter IP or domain (example: scanme.nmap.org)" required>
+<input type="text" name="ip" placeholder="Enter IP or domain" required>
 
 <div class="button-row">
 
@@ -170,14 +157,10 @@ Tip: Use Try Example if unsure what to enter
 <div class="results-box">
 
 <h3>
-Results
-{% if resolved_ip %}
-({{ resolved_ip }})
-{% endif %}
+Results {% if resolved_ip %}({{ resolved_ip }}){% endif %}
 </h3>
 
 {% for result in results %}
-
     {% if result.error is defined %}
         <div class="error">{{ result.error }}</div>
     {% else %}
@@ -190,7 +173,6 @@ Results
             {% endif %}
         </div>
     {% endif %}
-
 {% endfor %}
 
 </div>
@@ -200,16 +182,13 @@ Results
 
 <h2>About This Tool</h2>
 
-<p>
-This tool scans a target system to identify open ports and exposed network services.
-</p>
+<p>This tool scans a target system to identify open ports and services.</p>
 
 <h3>Features</h3>
 <p>
 Port scanning<br>
 Service detection<br>
-Open port identification<br>
-Basic exposure analysis
+Exposure analysis
 </p>
 
 <h3>Tech Stack</h3>
