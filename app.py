@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request
-import threading
 import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
 
-COMMON_SERVICES = {
+COMMON_PORTS = {
     21: "FTP",
     22: "SSH",
     23: "Telnet",
@@ -14,74 +14,113 @@ COMMON_SERVICES = {
     110: "POP3",
     139: "NetBIOS",
     143: "IMAP",
-    443: "HTTPS"
+    443: "HTTPS",
 }
 
-common_ports = list(COMMON_SERVICES.keys())
 
-lock = threading.Lock()
-
-
-def scan_port(ip, port, results):
+def scan_port(target_ip, port):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.8)
+            result = sock.connect_ex((target_ip, port))
 
-        if sock.connect_ex((ip, port)) == 0:
-            service = COMMON_SERVICES.get(port, "Unknown")
-            with lock:
-                results.append({
+            if result == 0:
+                return {
                     "port": port,
-                    "service": service,
-                    "status": "OPEN"
-                })
+                    "service": COMMON_PORTS.get(port, "Unknown"),
+                    "status": "OPEN",
+                }
 
-        sock.close()
+    except (socket.timeout, socket.error, OSError):
+        pass
 
-    except Exception as e:
-        with lock:
-            results.append({
-                "port": port,
-                "service": "ERROR",
-                "status": str(e)
-            })
+    return None
 
 
-def scan_target(target):
+def scan_host(hostname):
+    target_ip = socket.gethostbyname(hostname)
+
     results = []
 
-    try:
-        ip = socket.gethostbyname(target)
-    except socket.gaierror:
-        return None, [{"error": "Cannot resolve hostname"}]
+    with ThreadPoolExecutor(max_workers=20) as executor:
 
-    threads = []
+        futures = [
+            executor.submit(
+                scan_port,
+                target_ip,
+                port
+            )
+            for port in COMMON_PORTS
+        ]
 
-    for port in common_ports:
-        t = threading.Thread(target=scan_port, args=(ip, port, results))
-        threads.append(t)
-        t.start()
+        for future in as_completed(futures):
 
-    for t in threads:
-        t.join()
+            result = future.result()
 
-    return ip, results
+            if result:
+                results.append(result)
+
+    results.sort(key=lambda item: item["port"])
+
+    return target_ip, results
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+
+    target = ""
+    target_ip = None
+    results = []
+    error = None
+    scanned = False
+
     if request.method == "POST":
-        target = request.form.get("ip")
+
+        target = request.form.get("target", "").strip()
 
         if not target:
-            return render_template("index.html", results=[{"error": "Invalid input"}], resolved_ip=None)
 
-        ip, results = scan_target(target)
+            error = "Enter a hostname or IP address."
 
-        return render_template("index.html", results=results, resolved_ip=ip)
+        else:
 
-    return render_template("index.html", results=None, resolved_ip=None)
+            try:
+
+                target_ip, results = scan_host(target)
+                scanned = True
+
+            except socket.gaierror:
+
+                error = (
+                    "The hostname could not be resolved. "
+                    "Check the target and try again."
+                )
+
+            except Exception:
+
+                error = (
+                    "The scan could not be completed. "
+                    "Please verify the target and try again."
+                )
+
+    return render_template(
+        "index.html",
+        target=target,
+        target_ip=target_ip,
+        results=results,
+        error=error,
+        scanned=scanned,
+        ports_scanned=len(COMMON_PORTS),
+    )
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    import os
+
+    port = int(os.environ.get("PORT", 5000))
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=True
+    )

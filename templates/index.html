@@ -1,222 +1,517 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Network Scanner</title>
+    <meta charset="UTF-8">
 
-<style>
-body {
-    font-family: 'Roboto', Arial, sans-serif;
-    background: linear-gradient(to right, #1c92d2, #f2fcfe);
-    margin: 0;
-    padding: 0;
-    color: #0f172a;
-}
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-.container {
-    max-width: 900px;
-    margin: 50px auto;
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    text-align: center;
-}
+    <title>Network Scanner</title>
 
-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
+    <meta
+        name="description"
+        content="TCP port and service discovery tool"
+    >
 
-input[type="text"] {
-    width: 100%;
-    max-width: 450px;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #cbd5e1;
-    font-size: 14px;
-}
-
-.button-row {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-button {
-    width: 180px;
-    padding: 12px;
-    font-size: 14px;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: #1d4ed8;
-}
-
-.secondary-btn {
-    background: #334155;
-}
-
-h1 {
-    color: #1e3a8a;
-    font-size: 34px;
-}
-
-.subtitle {
-    color: #64748b;
-    font-size: 18px;
-    margin-bottom: 20px;
-}
-
-.hint {
-    font-size: 13px;
-    color: #555;
-    margin-top: 10px;
-}
-
-.results-box {
-    margin-top: 25px;
-    padding: 20px;
-    background: #f8fafc;
-    border-radius: 10px;
-    border: 1px solid #cbd5e1;
-    text-align: left;
-}
-
-.results-box h3 {
-    color: #1e3a8a;
-}
-
-.port {
-    font-size: 14px;
-    margin: 5px 0;
-}
-
-.open {
-    color: green;
-    font-weight: bold;
-}
-
-.error {
-    color: red;
-    font-weight: bold;
-}
-
-#infoBox {
-    display: none;
-    margin-top: 25px;
-    padding: 20px;
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    text-align: left;
-}
-
-#infoBox h2 {
-    color: #1e3a8a;
-}
-
-#infoBox h3 {
-    color: #334155;
-}
-
-</style>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
+
 
 <body>
 
-<div class="container">
+<header class="topbar">
 
-<h1>Network Scanner</h1>
+    <div class="container topbar-inner">
 
-<p class="subtitle">
-Scan a target system to detect open ports and exposed services
-</p>
+        <a href="/" class="brand">
+            Network Scanner
+        </a>
 
-<form method="POST">
-
-<input type="text" name="ip" placeholder="Enter IP or domain" required>
-
-<div class="button-row">
-
-<button type="submit">Start Scan</button>
-
-<button type="button" class="secondary-btn" onclick="fillExample()">Try Example</button>
-
-<button type="button" class="secondary-btn" onclick="toggleInfo()">Details</button>
-
-</div>
-
-</form>
-
-<p class="hint">
-Tip: Use Try Example if unsure what to enter
-</p>
-
-{% if results %}
-<div class="results-box">
-
-<h3>
-Results {% if resolved_ip %}({{ resolved_ip }}){% endif %}
-</h3>
-
-{% for result in results %}
-    {% if result.error is defined %}
-        <div class="error">{{ result.error }}</div>
-    {% else %}
-        <div class="port">
-            Port {{ result.port }} ({{ result.service }})
-            {% if result.status == "OPEN" %}
-                <span class="open">OPEN</span>
-            {% else %}
-                <span>{{ result.status }}</span>
-            {% endif %}
+        <div class="topbar-meta">
+            TCP / Service Discovery
         </div>
-    {% endif %}
-{% endfor %}
 
-</div>
-{% endif %}
+    </div>
 
-<div id="infoBox">
+</header>
 
-<h2>About This Tool</h2>
 
-<p>This tool scans a target system to identify open ports and services.</p>
+<main>
 
-<h3>Features</h3>
-<p>
-Port scanning<br>
-Service detection<br>
-Exposure analysis
-</p>
+    <div class="container">
 
-<h3>Tech Stack</h3>
-<p>Python Flask HTML CSS</p>
 
-</div>
+        <!-- =========================
+             HEADER
+        ========================== -->
 
-</div>
+        <section class="tool-header">
 
-<script>
-function fillExample() {
-    document.querySelector('input[name="ip"]').value = "scanme.nmap.org";
-}
+            <div class="section-label">
+                NETWORK DIAGNOSTICS
+            </div>
 
-function toggleInfo() {
-    var box = document.getElementById("infoBox");
-    box.style.display = (box.style.display === "block") ? "none" : "block";
-}
-</script>
+            <h1>
+                Find open ports.<br>
+                <span>Identify services.</span>
+            </h1>
+
+            <p>
+                Enter a hostname or IP address to test common TCP ports
+                and identify services accepting connections.
+            </p>
+
+        </section>
+
+
+        <!-- =========================
+             SCANNER
+        ========================== -->
+
+        <section class="scanner-panel">
+
+            <div class="panel-heading">
+
+                <div>
+                    <span class="panel-label">
+                        TARGET
+                    </span>
+
+                    <h2>
+                        Start a scan
+                    </h2>
+                </div>
+
+                <span class="scan-method">
+                    TCP CONNECT
+                </span>
+
+            </div>
+
+
+            <form
+                method="POST"
+                class="scan-form"
+            >
+
+                <div class="input-wrapper">
+
+                    <label
+                        for="target"
+                        class="sr-only"
+                    >
+                        Hostname or IP address
+                    </label>
+
+                    <span class="input-prefix">
+                        target:
+                    </span>
+
+                    <input
+                        type="text"
+                        id="target"
+                        name="target"
+                        value="{{ target }}"
+                        placeholder="hostname or IP address"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    Scan Target
+                </button>
+
+            </form>
+
+
+            <div class="example-row">
+
+                <span>
+                    Example:
+                </span>
+
+                <button
+                    type="button"
+                    onclick="document.getElementById('target').value='scanme.nmap.org'"
+                >
+                    scanme.nmap.org
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             AUTHORIZATION
+        ========================== -->
+
+        <div class="authorization-note">
+
+            <div class="note-symbol">
+                i
+            </div>
+
+            <div>
+
+                <strong>
+                    Authorized testing only
+                </strong>
+
+                <p>
+                    Only scan systems you own or have explicit permission
+                    to test.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             ERROR
+        ========================== -->
+
+        {% if error %}
+
+        <div class="error-panel">
+
+            <div class="error-title">
+                Scan Error
+            </div>
+
+            <p>
+                {{ error }}
+            </p>
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- =========================
+             RESULTS
+        ========================== -->
+
+        {% if scanned %}
+
+        <section class="results-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-label">
+                        RESULTS
+                    </div>
+
+                    <h2>
+                        Scan summary
+                    </h2>
+
+                </div>
+
+                <span class="complete">
+                    COMPLETE
+                </span>
+
+            </div>
+
+
+            <!-- SUMMARY -->
+
+            <div class="summary-grid">
+
+
+                <div class="summary-item">
+
+                    <span>
+                        Target
+                    </span>
+
+                    <strong class="technical">
+                        {{ target }}
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-item">
+
+                    <span>
+                        Resolved IP
+                    </span>
+
+                    <strong class="technical">
+                        {{ target_ip }}
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-item">
+
+                    <span>
+                        Ports Tested
+                    </span>
+
+                    <strong>
+                        {{ ports_scanned }}
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-item">
+
+                    <span>
+                        Open
+                    </span>
+
+                    <strong class="open-number">
+                        {{ results|length }}
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- PORT TABLE -->
+
+            <div class="results-card">
+
+                <div class="results-card-header">
+
+                    <div>
+
+                        <h3>
+                            Detected Services
+                        </h3>
+
+                        <p>
+                            Ports that accepted a TCP connection during the scan.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                {% if results %}
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Port
+                                </th>
+
+                                <th>
+                                    Service
+                                </th>
+
+                                <th>
+                                    Protocol
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for result in results %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="port-number">
+                                        {{ result.port }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ result.service }}
+                                </td>
+
+                                <td>
+                                    TCP
+                                </td>
+
+                                <td>
+                                    <span class="open-status">
+                                        <span class="status-dot"></span>
+                                        OPEN
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-results">
+
+                    <div class="empty-mark">
+                        -
+                    </div>
+
+                    <h3>
+                        No open ports detected
+                    </h3>
+
+                    <p>
+                        None of the {{ ports_scanned }} common TCP ports
+                        tested accepted a connection.
+                    </p>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- =========================
+             HOW IT WORKS
+        ========================== -->
+
+        <section class="how-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="section-label">
+                        UNDER THE HOOD
+                    </div>
+
+                    <h2>
+                        How the scanner works
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="process-grid">
+
+
+                <div class="process-card">
+
+                    <span>
+                        01
+                    </span>
+
+                    <h3>
+                        Resolve
+                    </h3>
+
+                    <p>
+                        The hostname is resolved to an IP address before
+                        scanning begins.
+                    </p>
+
+                </div>
+
+
+                <div class="process-card">
+
+                    <span>
+                        02
+                    </span>
+
+                    <h3>
+                        Connect
+                    </h3>
+
+                    <p>
+                        TCP socket connections are attempted against
+                        the selected common ports.
+                    </p>
+
+                </div>
+
+
+                <div class="process-card">
+
+                    <span>
+                        03
+                    </span>
+
+                    <h3>
+                        Identify
+                    </h3>
+
+                    <p>
+                        Open ports are mapped to commonly associated
+                        network services.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+</main>
+
+
+<footer>
+
+    <div class="container footer-inner">
+
+        <span>
+            Network Scanner
+        </span>
+
+        <span>
+            Python · Flask · Socket Programming
+        </span>
+
+    </div>
+
+</footer>
+
 
 </body>
+
 </html>
